@@ -1,0 +1,4 @@
+*.pyc
+.init/*
+*.htm
+*.html
