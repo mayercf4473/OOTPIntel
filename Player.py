@@ -179,6 +179,12 @@ class Player(BaseModel):
         self.STE = fieldArray[headerDict['STE']]
         self.RUN = fieldArray[headerDict['RUN']]
 
+        #250 IP for starter, 80 for others.  multiply by 10/6 to brings to 1000AB scale
+        base = 80
+        if self.Position == "SP":
+            base = 250
+        innings = base * 10/6
+
         self.wOBA = self.calcWOBA(self.CON, self.GAP, self.POW, self.EYE, self.Ks, self.SPE, constants.normal)
         self.wRAA = self.calcWRAA(self.wOBA, self.EYE, constants.normal)
         self.FIP = self.calcFIP(self.STU, self.MOV, self.CONT, constants.normal)
@@ -194,9 +200,11 @@ class Player(BaseModel):
         self.FIPvR = self.calcFIP(self.STUvR, self.MOVvR, self.CONTvR, constants.normal)
 
         self.bWAR = (self.wRAA + self.wSB + self.UZR)/10
-        self.pWAR = Stats.rawPWAR(self.Position, self.FIP)
+        self.pWAR = Stats.rawPWAR(innings, self.FIP)
+
         self.bWARP = (self.wRAAP + self.wSB + self.UZRP)/10
-        self.pWARP = Stats.rawPWAR(self.Position, self.FIPP)
+        self.pWARP = Stats.rawPWAR(innings, self.FIPP)
+
 #TODO re-write team stuff, because dupes
         if (self.Team and self.Team != '0' and self.Level):
             franchise = League.findFranchise(self.Team, self.Level)
@@ -263,7 +271,7 @@ class Player(BaseModel):
 
         walks = self.getWalks(eye, consts)
 
-        return Stats.rawWOBA(walks, singles, doubles, triples, homeRuns)
+        return Stats.rawWOBA(1000, walks, singles, doubles, triples, homeRuns)
 
     def getWalks(self, eye, consts):
         nEye = ((float(eye) - consts.minRating)/consts.deltaMinMax) * consts.battingCo + 1
@@ -278,7 +286,7 @@ class Player(BaseModel):
     def calcWRAA(self, woba, eye, consts):
         #=(1000+AF2)*(AP2-320)/1200
         walks = self.getWalks(eye, consts)
-        return Stats.rawWRAA(woba, walks)
+        return Stats.rawWRAA(1000, woba, walks)
 
     def calcFIP(self, stuff, movement, control, consts):
         nControl = ((float(control) - consts.minRating)/consts.deltaMinMax) * consts.pitchingCo + 1
@@ -295,7 +303,7 @@ class Player(BaseModel):
         else:
             walks = 150 - nControl
 
-        return Stats.rawFIP(strikeOuts, homeRuns, walks)
+        return Stats.rawFIP(136, strikeOuts, homeRuns, walks)
 
     def calcUZR(self, consts):
         ssUZR = (((float(self.SS) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.365 - 22.4
@@ -343,5 +351,14 @@ class Player(BaseModel):
         nSTE = (((float(self.STE) - consts.minRating) / consts.deltaMinMax) * consts.stealingCo + 1)
         return  .00004 * nSTE * nSTE * nSTE - 0.005 * nSTE * nSTE + 0.209 * nSTE - 3.8
 
+    @staticmethod
+    def findPlayerByName(name):
+        modName = name.replace("-","0")
+        retval = Player.select().where(Player.Name == modName).first()
+        return retval
 
+    @staticmethod
+    def findPlayer(name, dob):
+        retval = Player.select().where((Player.Name == name) & (Player.DOB == dob)).first()
+        return retval
 

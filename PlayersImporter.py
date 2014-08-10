@@ -2,17 +2,17 @@ __author__ = 'cmayer'
 
 from HTMLParser import HTMLParser
 from LeagueConsts import LeagueConsts
-from Stats import Stats
+from Player import Player
 from DBController import DBController
 from League import League
 
 # This class will import stats files
 
-class StatsImporter(HTMLParser):
+class PlayersImporter(HTMLParser):
     #vars
     #state (string) ;  What state the importer is in: "Init, Headers, Table, End"
 
-    def __init__(self, year):
+    def __init__(self):
         HTMLParser.__init__(self)
         self.section = "Init"
         self.subSection = 0
@@ -21,7 +21,7 @@ class StatsImporter(HTMLParser):
         self.hasData = False
         self.index = 0
         self.headers = dict()
-        self.year = year
+        self.leagueConsts = LeagueConsts()
 
     def loadStats(self, statsFile):
         fStatsFile = open(statsFile, "r")
@@ -72,10 +72,10 @@ class StatsImporter(HTMLParser):
                 fieldArray = self.playerData.split(',')
                 #query for player based on name (field 1) and date (field 4)
                 #print 'processing ' + unicode(fieldArray[1], errors="ignore")
-                newPlayer = Stats.findPlayer(unicode(fieldArray[1], errors="ignore"), fieldArray[4], self.year)
+                newPlayer = Player.findPlayer(unicode(fieldArray[1], errors="ignore"), fieldArray[4])
                 if newPlayer is None:
-                    newPlayer = Stats()
-                newPlayer.initFromString(self.year, self.playerData, self.headers)
+                    newPlayer = Player()
+                newPlayer.initFromString(self.playerData, self.headers, self.leagueConsts)
                 newPlayer.save()
                 self.playerData = ""
         self.currentData = ""
@@ -91,13 +91,36 @@ class StatsImporter(HTMLParser):
     def doImport(self, fileName):
         importer.loadStats(fileName)
 
+    def draftPlayers(self, fileName):
+        f = open(fileName, "r")
+        playerList = f.read()
+        playerArray = playerList.split(",")
+        for playerName in playerArray:
+            player = DBController.findPlayerByName(playerName)
+            if player:
+                player.drafted = 1
+                player.save()
+
+    def fixTriples(self):
+        for player in Player.select():
+            player.wOBA = player.calcWOBA(player.CON, player.GAP, player.POW, player.EYE, player.Ks, player.SPE)
+            player.wOBAvL = player.calcWOBA(player.CONvL, player.GAPvL, player.POWvL, player.EYEvL, player.KvL, player.SPE)
+            player.wOBAvR = player.calcWOBA(player.CONvR, player.GAPvR, player.POWvR, player.EYEvR, player.KvR, player.SPE)
+            player.wOBAP = player.calcWOBA(player.CONP, player.GAPP, player.POWP, player.EYEP, player.KP, player.SPE)
+            player.save()
+
 if __name__ == "__main__":
     print "Welcome to stats importer!"
-    #LeagueConsts.initLeague(1,10, 1, 10)
-    importer = StatsImporter(2014)
+    LeagueConsts.initLeague(1,10, 1, 10)
+    importer = PlayersImporter()
     dbController = DBController()
     dbController.checkInit()
     #importer.doImport("mlcall.htm")
     #importer.doImport("mlchou.htm")
-    importer.doImport("pbf_stats.htm")
+    importer.doImport("input/pbf_all.htm")
 
+    #importer.draftPlayers('drafted.txt')
+    #importer.fixTriples()
+    #league = League()
+    #league.loadTeams('LeagueStruct.json')
+    #print "--> " + League.findFranchise("OKL", "AAA")
