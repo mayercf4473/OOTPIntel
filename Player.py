@@ -4,7 +4,7 @@ from BaseModel import BaseModel
 from peewee import *
 from LeagueConsts import LeagueConsts
 from League import League
-from Stats import Stats
+import BaseballFunctions
 
 
 #This is a row of the player table, that contains all ratings information about a player
@@ -111,7 +111,8 @@ class Player(BaseModel):
         dataString = dataString.replace('-','0')
         fieldArray = dataString.split(',')
         self.Position = fieldArray[headerDict['POS']]
-        self.Name = unicode(fieldArray[headerDict['Name']], errors="ignore")
+        theName = unicode(fieldArray[headerDict['Name']], errors="ignore")
+        self.Name = theName.replace('0','-')
         self.Team = fieldArray[headerDict['TM']]
         self.Level = fieldArray[headerDict['Lev']]
         self.DOB = fieldArray[headerDict['DOB']]
@@ -179,6 +180,8 @@ class Player(BaseModel):
         self.STE = fieldArray[headerDict['STE']]
         self.RUN = fieldArray[headerDict['RUN']]
 
+        fullTeam = fieldArray[headerDict['TMa']]
+
         #250 IP for starter, 80 for others.  multiply by 10/6 to brings to 1000AB scale
         base = 80
         if self.Position == "SP":
@@ -200,16 +203,15 @@ class Player(BaseModel):
         self.FIPvR = self.calcFIP(self.STUvR, self.MOVvR, self.CONTvR, constants.normal)
 
         self.bWAR = (self.wRAA + self.wSB + self.UZR)/10
-        self.pWAR = Stats.rawPWAR(innings, self.FIP)
+        self.pWAR = BaseballFunctions.rawPWAR(innings, self.FIP)
 
         self.bWARP = (self.wRAAP + self.wSB + self.UZRP)/10
-        self.pWARP = Stats.rawPWAR(innings, self.FIPP)
+        self.pWARP = BaseballFunctions.rawPWAR(innings, self.FIPP)
 
-#TODO re-write team stuff, because dupes
         if (self.Team and self.Team != '0' and self.Level):
             franchise = League.findFranchise(self.Team, self.Level)
             if franchise:
-                self.franchise = League.findFranchise(self.Team, self.Level)
+                self.franchise = League.findFranchise(self.Team, self.Level, fullTeam)
             else:
                 print "missing franchse: " + self.Team + "," + self.Level
         else:
@@ -271,7 +273,7 @@ class Player(BaseModel):
 
         walks = self.getWalks(eye, consts)
 
-        return Stats.rawWOBA(1000, walks, singles, doubles, triples, homeRuns)
+        return BaseballFunctions.rawWOBA(1000, walks, singles, doubles, triples, homeRuns)
 
     def getWalks(self, eye, consts):
         nEye = ((float(eye) - consts.minRating)/consts.deltaMinMax) * consts.battingCo + 1
@@ -286,7 +288,7 @@ class Player(BaseModel):
     def calcWRAA(self, woba, eye, consts):
         #=(1000+AF2)*(AP2-320)/1200
         walks = self.getWalks(eye, consts)
-        return Stats.rawWRAA(1000, woba, walks)
+        return BaseballFunctions.rawWRAA(1000, woba, walks)
 
     def calcFIP(self, stuff, movement, control, consts):
         nControl = ((float(control) - consts.minRating)/consts.deltaMinMax) * consts.pitchingCo + 1
@@ -303,7 +305,7 @@ class Player(BaseModel):
         else:
             walks = 150 - nControl
 
-        return Stats.rawFIP(136, strikeOuts, homeRuns, walks)
+        return BaseballFunctions.rawFIP(136, strikeOuts, homeRuns, walks)
 
     def calcUZR(self, consts):
         ssUZR = (((float(self.SS) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.365 - 22.4
@@ -314,7 +316,7 @@ class Player(BaseModel):
         lfUZR = (((float(self.LF) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.436 - 32.8
         rfUZR = (((float(self.RF) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.453 - 34.1
         cUZR = (((float(self.C) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.46 - 15.6
-        self.UZR = max(ssUZR, b1UZR, b2UZR, b3UZR, cfUZR, lfUZR, rfUZR, cUZR)
+        self.UZR = self.pickUZR(ssUZR, b1UZR, b2UZR, b3UZR, cfUZR, lfUZR, rfUZR, cUZR)
 
     def calcUZRP(self, consts):
         nIFRNG = (((float(self.IFRNG) - consts.minRating) / consts.deltaMinMax) * consts.fieldCo + 1)
@@ -344,7 +346,26 @@ class Player(BaseModel):
         lfUZR = (((float(self.LFP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.436 - 32.8
         rfUZR = (((float(self.RFP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.453 - 34.1
         cUZR = (((float(self.CP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.46 - 15.6
-        self.UZRP = max(ssUZR, b1UZR, b2UZR, b3UZR, cfUZR, lfUZR, rfUZR, cUZR)
+        self.UZRP = self.pickURZ(ssUZR, b1UZR, b2UZR, b3UZR, cfUZR, lfUZR, rfUZR, cUZR)
+
+    def pickUZR(self, ssUZR, b1UZR, b2UZR, b3UZR, cfUZR, lfUZR, rfUZR, cUZR):
+        if self.Position == "SS":
+            return ssUZR
+        elif self.Position == "1B":
+            return b1UZR
+        elif self.Position == "2B":
+            return b2UZR
+        elif self.Position == "3B":
+            return b3UZR
+        elif self.Position == "CF":
+            return cfUZR
+        elif self.Position == "LF":
+            return lfUZR
+        elif self.Position == "RF":
+            return rfUZR
+
+        return cUZR
+
 
     #very rough wSB
     def calcwSB(self, consts):
@@ -353,8 +374,7 @@ class Player(BaseModel):
 
     @staticmethod
     def findPlayerByName(name):
-        modName = name.replace("-","0")
-        retval = Player.select().where(Player.Name == modName).first()
+        retval = Player.select().where(Player.Name == name).first()
         return retval
 
     @staticmethod

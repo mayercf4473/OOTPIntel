@@ -100,4 +100,6 @@ if __name__ == "__main__":
     #importer.doImport("mlcall.htm")
     #importer.doImport("mlchou.htm")
     importer.doImport("pbf_stats.htm")
+    #league = League()
+    #league.loadTeams('input/LeagueStruct.json')
 
