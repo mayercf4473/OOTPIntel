@@ -89,7 +89,7 @@ class PlayersImporter(HTMLParser):
                 self.currentData += data.replace(',',' ')
 
     def doImport(self, fileName):
-        importer.loadStats(fileName)
+        self.loadStats(fileName)
 
     def draftPlayers(self, fileName):
         f = open(fileName, "r")
@@ -109,18 +109,3 @@ class PlayersImporter(HTMLParser):
             player.wOBAP = player.calcWOBA(player.CONP, player.GAPP, player.POWP, player.EYEP, player.KP, player.SPE)
             player.save()
 
-if __name__ == "__main__":
-    print "Welcome to stats importer!"
-    LeagueConsts.initLeague(1,10, 1, 10)
-    importer = PlayersImporter()
-    dbController = DBController()
-    dbController.checkInit()
-    #importer.doImport("mlcall.htm")
-    #importer.doImport("mlchou.htm")
-    importer.doImport("input/pbf_all.htm")
-
-    #importer.draftPlayers('drafted.txt')
-    #importer.fixTriples()
-    #league = League()
-    #league.loadTeams('LeagueStruct.json')
-    #print "--> " + League.findFranchise("OKL", "AAA")

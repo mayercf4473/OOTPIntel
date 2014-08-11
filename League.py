@@ -6,9 +6,14 @@ import json
 
 class League():
     franchiseMap = dict()
+    minRating = 0
+    maxRating = 0
+    minPotential = 0
+    maxPotential = 0
 
     class Team(BaseModel):
         team = CharField(index=True, max_length=8)
+        fullTeam = CharField(max_length=32)
         level = CharField(index=True, max_length=8)
         franchise = CharField()
 
@@ -19,6 +24,12 @@ class League():
     def loadTeams(self, jsonFileName):
         f = open(jsonFileName, "r")
         jsonObj = json.load(f)
+
+        self.minRating = int(jsonObj['minR'])
+        self.maxRating = int(jsonObj['maxR'])
+        self.minPotential = int(jsonObj['minP'])
+        self.maxPotential = int(jsonObj['maxP'])
+
         for teamBlock in jsonObj['Teams']:
             team = self.Team()
             team.team = teamBlock['Team']
@@ -28,24 +39,31 @@ class League():
                 mteam = self.Team()
                 mteam.team = minorTeam['Team']
                 mteam.level = minorTeam['Level']
+                if 'FullTeam' in minorTeam:
+                    mteam.fullTeam = minorTeam['FullTeam']
+                else:
+                    mteam.fullTeam = ""
                 mteam.franchise = team.team
                 mteam.save()
             team.save()
 
     @staticmethod
-    def findFranchise(team, level):
-        #TODO re-write by having select return a list, and check length
+    def findFranchise(team, level, fullTeam):
         count = 0;
         retval = ""
-        for uteam in League.Team.select().where((League.Team.team == team) & (League.Team.level == level)):
-            retval = uteam.franchise
-            count += 1
-        if count > 1:
-            raise NameError('Multiple teams found for ' + team + ':' + level)
-            print "HACK setting " + team + " to SEA"
-            retval = "SEA"
-        return retval
+        useFullTeam = False
+        found = False
+        selectList = League.Team.select().where((League.Team.team == team) & (League.Team.level == level))
+        if selectList.len() > 0:
+            useFullTeam = True
+        for uteam in selectList:
+            if not useFullTeam or uteam.fullTeam == fullTeam:
+                retval = uteam.franchise
+                found = True
 
-#TODO problem with duplicate teams.
+        if (not found):
+            print "No Franchise for " + team + level + fullTeam
+
+        return retval
 
 

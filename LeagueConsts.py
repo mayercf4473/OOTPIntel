@@ -5,6 +5,7 @@ __author__ = 'cmayer'
 
 from BaseModel import BaseModel
 from peewee import *
+from League import League
 
 class ConstGroup:
     minRating = 0
@@ -28,14 +29,16 @@ class LeagueConsts():
         maxRatingP = IntegerField(default=80)
 
     @staticmethod
-    def initLeague(min, max, minP, maxP):
+    def initLeague(leagueFile):
         LeagueConsts.LeagueConstDB.create_table(True)
         if LeagueConsts.LeagueConstDB.select().count() == 0:
             lg = LeagueConsts.LeagueConstDB()
-            lg.minRating = min
-            lg.maxRating = max
-            lg.minRatingP = minP
-            lg.maxRatingP = maxP
+            league = League()
+            league.loadTeams(leagueFile)
+            lg.minRating = league.minRating
+            lg.maxRating = league.maxRating
+            lg.minRatingP = league.minPotential
+            lg.maxRatingP = league.maxPotential
             lg.save()
 
     def __init__(self):

@@ -7,16 +7,14 @@ from League import League
 from Stats import Stats
 
 
-
 class DBController(BaseModel):
 
-    def checkInit(self):
+    def checkInit(self, leagueFile):
         #if player table does not exist, create it
         Stats.create_table(True)
         Player.create_table(True)
         League.create_table(True)
-
-
+        LeagueConsts.initLeague(leagueFile)
 
     @staticmethod
     def getLeagueConsts():

@@ -89,17 +89,4 @@ class StatsImporter(HTMLParser):
                 self.currentData += data.replace(',',' ')
 
     def doImport(self, fileName):
-        importer.loadStats(fileName)
-
-if __name__ == "__main__":
-    print "Welcome to stats importer!"
-    #LeagueConsts.initLeague(1,10, 1, 10)
-    importer = StatsImporter(2014)
-    dbController = DBController()
-    dbController.checkInit()
-    #importer.doImport("mlcall.htm")
-    #importer.doImport("mlchou.htm")
-    importer.doImport("pbf_stats.htm")
-    #league = League()
-    #league.loadTeams('input/LeagueStruct.json')
-
+        self.loadStats(fileName)
