@@ -11,7 +11,7 @@ class ConstGroup:
     minRating = 0
     maxRating = 0
     deltaMinMax = maxRating - minRating
-    battingCo = 19
+    battingCo = 249
     pitchingCo = 249
     speedCo = 249
     fieldCo = 99
@@ -28,9 +28,7 @@ class LeagueConsts():
         minRatingP = IntegerField(default=20)
         maxRatingP = IntegerField(default=80)
 
-    @staticmethod
-    def initLeague(leagueFile):
-        LeagueConsts.LeagueConstDB.create_table(True)
+    def initLeague(self,leagueFile):
         if LeagueConsts.LeagueConstDB.select().count() == 0:
             lg = LeagueConsts.LeagueConstDB()
             league = League()
@@ -41,9 +39,14 @@ class LeagueConsts():
             lg.maxRatingP = league.maxPotential
             lg.save()
 
-    def __init__(self):
+    def __init__(self, leagueFile):
+        LeagueConsts.LeagueConstDB.create_table(True)
         if self.normal.minRating == 0:
             dbconsts = self.LeagueConstDB.select().first()
+            if (dbconsts is None):
+                self.initLeague(leagueFile)
+                dbconsts = self.LeagueConstDB.select().first()
+
             self.normal.minRating = dbconsts.minRating
             self.normal.maxRating = dbconsts.maxRating
             self.potential.minRating = dbconsts.minRatingP

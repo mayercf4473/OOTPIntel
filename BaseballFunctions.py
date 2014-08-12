@@ -2,7 +2,7 @@ __author__ = 'cmayer'
 
 
 def rawWOBA(ab, walks, singles, doubles, triples, homeRuns):
-    #assumes above calculations are for 1000 at bats
+
     if (ab + walks) <= 0:
         wOBA = 0
     else:

@@ -12,7 +12,7 @@ class PlayersImporter(HTMLParser):
     #vars
     #state (string) ;  What state the importer is in: "Init, Headers, Table, End"
 
-    def __init__(self):
+    def __init__(self, consts):
         HTMLParser.__init__(self)
         self.section = "Init"
         self.subSection = 0
@@ -21,7 +21,7 @@ class PlayersImporter(HTMLParser):
         self.hasData = False
         self.index = 0
         self.headers = dict()
-        self.leagueConsts = LeagueConsts()
+        self.leagueConsts = consts
 
     def loadStats(self, statsFile):
         fStatsFile = open(statsFile, "r")
@@ -109,3 +109,8 @@ class PlayersImporter(HTMLParser):
             player.wOBAP = player.calcWOBA(player.CONP, player.GAPP, player.POWP, player.EYEP, player.KP, player.SPE)
             player.save()
 
+    def fixStats(self):
+        constants = LeagueConsts()
+        for player in Player.select():
+            player.calcStats(constants)
+            player.save()

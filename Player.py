@@ -1,3 +1,5 @@
+import math
+
 __author__ = 'cmayer'
 
 from BaseModel import BaseModel
@@ -6,6 +8,8 @@ from LeagueConsts import LeagueConsts
 from League import League
 import BaseballFunctions
 
+constAB=550
+constIP=230
 
 #This is a row of the player table, that contains all ratings information about a player
 #In the future we may place some stats here as well to refine the prediction model for future performance
@@ -113,7 +117,7 @@ class Player(BaseModel):
         self.Position = fieldArray[headerDict['POS']]
         theName = unicode(fieldArray[headerDict['Name']], errors="ignore")
         self.Name = theName.replace('0','-')
-        self.Team = fieldArray[headerDict['TM']]
+        self.Team = unicode(fieldArray[headerDict['TMa']], errors="ignore").encode("ascii", "ignore")
         self.Level = fieldArray[headerDict['Lev']]
         self.DOB = fieldArray[headerDict['DOB']]
         self.Age=fieldArray[headerDict['Age']]
@@ -180,13 +184,24 @@ class Player(BaseModel):
         self.STE = fieldArray[headerDict['STE']]
         self.RUN = fieldArray[headerDict['RUN']]
 
-        fullTeam = fieldArray[headerDict['TMa']]
+        fullTeam = unicode(fieldArray[headerDict['TM']], errors="ignore").encode("ascii", "ignore")
+        self.calcStats(constants)
 
-        #250 IP for starter, 80 for others.  multiply by 10/6 to brings to 1000AB scale
+        if (self.Team and self.Team != '0' and self.Level):
+            franchise = League.findFranchise(self.Team, self.Level, fullTeam)
+            if franchise:
+                self.franchise = franchise
+            else:
+                print "missing franchse: " + self.Team + "," + self.Level
+        else:
+            print "bad data for " + self.Name
+
+    def calcStats(self, constants):
+        #250 IP for starter, 80 for others.
         base = 80
         if self.Position == "SP":
             base = 250
-        innings = base * 10/6
+        innings = base
 
         self.wOBA = self.calcWOBA(self.CON, self.GAP, self.POW, self.EYE, self.Ks, self.SPE, constants.normal)
         self.wRAA = self.calcWRAA(self.wOBA, self.EYE, constants.normal)
@@ -208,14 +223,6 @@ class Player(BaseModel):
         self.bWARP = (self.wRAAP + self.wSB + self.UZRP)/10
         self.pWARP = BaseballFunctions.rawPWAR(innings, self.FIPP)
 
-        if (self.Team and self.Team != '0' and self.Level):
-            franchise = League.findFranchise(self.Team, self.Level)
-            if franchise:
-                self.franchise = League.findFranchise(self.Team, self.Level, fullTeam)
-            else:
-                print "missing franchse: " + self.Team + "," + self.Level
-        else:
-            print "bad data for " + self.Name
 
         class Meta:
             order_by = ('Name',)
@@ -238,16 +245,11 @@ class Player(BaseModel):
         nKs = ((float(ks) - consts.minRating)/consts.deltaMinMax) * consts.battingCo + 1
         nSpeed = ((float(speed) - consts.minRating) / consts.deltaMinMax) * consts.speedCo + 1
 
-        hits = 0
-        if nCon < 11:
-            hits = nCon * 20 + 65
-        else:
-            hits = (nCon - 10) * 10 + 265
+        hits = -0.0015*nCon*nCon + 1.1119*nCon + 42.642
 
-        xbh = nGap * 5.2
+        xbh = 0.2855 * nGap - 1.0371
 
         triples = 0
-
         if nSpeed < 50:
             triples = xbh * .03
         elif nSpeed < 90:
@@ -263,49 +265,36 @@ class Player(BaseModel):
 
         doubles = xbh - triples
 
-        homeRuns = 0
-        if nPow < 11:
-            homeRuns = nPow * 2.9
-        else:
-            homeRuns = (nPow - 10) * 6.2 + 29
+        homeRuns = 0.0008 * nPow * nPow + 0.0786*nPow + 1.4208
+
 
         singles = hits - doubles - triples - homeRuns
 
         walks = self.getWalks(eye, consts)
 
-        return BaseballFunctions.rawWOBA(1000, walks, singles, doubles, triples, homeRuns)
+        return BaseballFunctions.rawWOBA(constAB, walks, singles, doubles, triples, homeRuns)
 
     def getWalks(self, eye, consts):
         nEye = ((float(eye) - consts.minRating)/consts.deltaMinMax) * consts.battingCo + 1
+        walks = 0.0016* nEye * nEye + 0.4172*nEye - 0.9167
 
-        walks = 0
-        if (nEye < 11):
-            walks = nEye * 9.09
-        else:
-            walks = (nEye - 10) * 18.18 + 91
         return walks
 
     def calcWRAA(self, woba, eye, consts):
         #=(1000+AF2)*(AP2-320)/1200
         walks = self.getWalks(eye, consts)
-        return BaseballFunctions.rawWRAA(1000, woba, walks)
+        return BaseballFunctions.rawWRAA(constAB, woba, walks)
 
     def calcFIP(self, stuff, movement, control, consts):
         nControl = ((float(control) - consts.minRating)/consts.deltaMinMax) * consts.pitchingCo + 1
         nStuff = ((float(stuff) - consts.minRating)/consts.deltaMinMax) * consts.pitchingCo + 1
         nMovement = ((float(movement) - consts.minRating)/consts.deltaMinMax) * consts.pitchingCo + 1
 
-        strikeOuts = nStuff * .95 + 10
-        homeRuns = 38 - .18 * min(nMovement, 200)
-        walks = 0
-        if nControl > 210:
-            walks = 5
-        elif nControl > 100:
-            walks = -0.4 * nControl + 90
-        else:
-            walks = 150 - nControl
+        strikeOuts = 0.8936 * nStuff + 8.9379
+        homeRuns = max(10, -0.1355 * nMovement + 43.86)
+        walks = max(8, 0.0041 * nControl * nControl - 2.0004 * nControl + 250.9)
 
-        return BaseballFunctions.rawFIP(136, strikeOuts, homeRuns, walks)
+        return BaseballFunctions.rawFIP(constIP, strikeOuts, homeRuns, walks)
 
     def calcUZR(self, consts):
         ssUZR = (((float(self.SS) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.365 - 22.4
@@ -346,7 +335,7 @@ class Player(BaseModel):
         lfUZR = (((float(self.LFP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.436 - 32.8
         rfUZR = (((float(self.RFP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.453 - 34.1
         cUZR = (((float(self.CP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.46 - 15.6
-        self.UZRP = self.pickURZ(ssUZR, b1UZR, b2UZR, b3UZR, cfUZR, lfUZR, rfUZR, cUZR)
+        self.UZRP = self.pickUZR(ssUZR, b1UZR, b2UZR, b3UZR, cfUZR, lfUZR, rfUZR, cUZR)
 
     def pickUZR(self, ssUZR, b1UZR, b2UZR, b3UZR, cfUZR, lfUZR, rfUZR, cUZR):
         if self.Position == "SS":

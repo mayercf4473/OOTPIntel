@@ -9,12 +9,11 @@ from Stats import Stats
 
 class DBController(BaseModel):
 
-    def checkInit(self, leagueFile):
+    def checkInit(self):
         #if player table does not exist, create it
-        Stats.create_table(True)
+#        Stats.create_table(True)
         Player.create_table(True)
         League.create_table(True)
-        LeagueConsts.initLeague(leagueFile)
 
     @staticmethod
     def getLeagueConsts():

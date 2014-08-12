@@ -25,16 +25,17 @@ class League():
         f = open(jsonFileName, "r")
         jsonObj = json.load(f)
 
-        self.minRating = int(jsonObj['minR'])
-        self.maxRating = int(jsonObj['maxR'])
-        self.minPotential = int(jsonObj['minP'])
-        self.maxPotential = int(jsonObj['maxP'])
+        self.minRating = int(jsonObj['MinR'])
+        self.maxRating = int(jsonObj['MaxR'])
+        self.minPotential = int(jsonObj['MinP'])
+        self.maxPotential = int(jsonObj['MaxP'])
 
         for teamBlock in jsonObj['Teams']:
             team = self.Team()
             team.team = teamBlock['Team']
             team.level = 'ML'
             team.franchise = team.team
+            team.fullTeam = ""
             for minorTeam in teamBlock['minors']:
                 mteam = self.Team()
                 mteam.team = minorTeam['Team']
@@ -54,7 +55,7 @@ class League():
         useFullTeam = False
         found = False
         selectList = League.Team.select().where((League.Team.team == team) & (League.Team.level == level))
-        if selectList.len() > 0:
+        if selectList.count() > 1:
             useFullTeam = True
         for uteam in selectList:
             if not useFullTeam or uteam.fullTeam == fullTeam:
@@ -62,7 +63,8 @@ class League():
                 found = True
 
         if (not found):
-            print "No Franchise for " + team + level + fullTeam
+            if not level == "INT":
+                print "No Franchise for " + team + level + fullTeam
 
         return retval
 
