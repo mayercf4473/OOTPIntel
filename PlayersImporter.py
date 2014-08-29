@@ -110,7 +110,6 @@ class PlayersImporter(HTMLParser):
             player.save()
 
     def fixStats(self):
-        constants = LeagueConsts()
         for player in Player.select():
-            player.calcStats(constants)
+            player.calcStats(self.leagueConsts)
             player.save()

@@ -14,6 +14,9 @@ constIP=230
 #This is a row of the player table, that contains all ratings information about a player
 #In the future we may place some stats here as well to refine the prediction model for future performance
 class Player(BaseModel):
+    class Meta:
+        db_name = "upcoming"
+
     #stats include FirstName, LastName, BirthDay (this tuple should be unique)
     #Team, Bats(L,R,S), Throws(L,R)...
     Position = CharField()
@@ -184,8 +187,9 @@ class Player(BaseModel):
         self.STE = fieldArray[headerDict['STE']]
         self.RUN = fieldArray[headerDict['RUN']]
 
-        fullTeam = unicode(fieldArray[headerDict['TM']], errors="ignore").encode("ascii", "ignore")
         self.calcStats(constants)
+
+        fullTeam = unicode(fieldArray[headerDict['TM']], errors="ignore").encode("ascii", "ignore")
 
         if (self.Team and self.Team != '0' and self.Level):
             franchise = League.findFranchise(self.Team, self.Level, fullTeam)
@@ -304,7 +308,7 @@ class Player(BaseModel):
         cfUZR = (((float(self.CF) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.519 - 36.6
         lfUZR = (((float(self.LF) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.436 - 32.8
         rfUZR = (((float(self.RF) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.453 - 34.1
-        cUZR = (((float(self.C) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.46 - 15.6
+        cUZR = (((float(self.C) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.11337 - 11.281
         self.UZR = self.pickUZR(ssUZR, b1UZR, b2UZR, b3UZR, cfUZR, lfUZR, rfUZR, cUZR)
 
     def calcUZRP(self, consts):
@@ -334,7 +338,8 @@ class Player(BaseModel):
         cfUZR = (((float(self.CFP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.519 - 36.6
         lfUZR = (((float(self.LFP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.436 - 32.8
         rfUZR = (((float(self.RFP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.453 - 34.1
-        cUZR = (((float(self.CP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.46 - 15.6
+        #cUZR = (((float(self.CP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.46 - 15.6
+        cUZR = (((float(self.CP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.11337 - 11.281
         self.UZRP = self.pickUZR(ssUZR, b1UZR, b2UZR, b3UZR, cfUZR, lfUZR, rfUZR, cUZR)
 
     def pickUZR(self, ssUZR, b1UZR, b2UZR, b3UZR, cfUZR, lfUZR, rfUZR, cUZR):
