@@ -1,3 +1,7 @@
+import argparse
+
+import BaseModel
+from peewee import MySQLDatabase
 from LeagueConsts import LeagueConsts
 from PlayersImporter import PlayersImporter
 
@@ -10,19 +14,18 @@ from Player import Player
 
 def main():
     print "Welcome to stats importer!"
-    #LeagueConsts.initLeague(1,10, 1, 10)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--schema", help="Schema name", default="ootp_players")
+    parser.add_argument("--config", help="Json config file")
+    parser.add_argument("--playerFile", help="Player file to import")
+    args=parser.parse_args()
+    BaseModel.TheDatabase.init(args.schema, user='ootp', password='ootp')
+    BaseModel.TheDatabase.connect()
     dbController = DBController()
     dbController.checkInit()
-    importer = PlayersImporter(LeagueConsts('input/pbf_league.json'))
+    importer = PlayersImporter(LeagueConsts(args.config))
     #importer = StatsImporter(2014)
-    #importer.fixStats()
-    #importer.doImport("input/pbfhou.htm")
-    importer.doImport("input/pbf_fa.htm")
-    #importer.doImport("mlchou.htm")
-    #importer.doImport("pbf_stats.htm")
-    #importer.doImport("mlcall.htm")
-    #importer.draftPlayers('drafted.txt')
-    #importer.fixTriples()
+    importer.doImport(args.playerFile)
 
 if __name__ == "__main__":
    main()

@@ -2,7 +2,7 @@ __author__ = 'cmayer'
 
 from peewee import *
 
-TheDatabase = MySQLDatabase('pbf_players', user='ootp', password='ootp')
+TheDatabase =  MySQLDatabase(None)
 
 class BaseModel(Model):
     class Meta:

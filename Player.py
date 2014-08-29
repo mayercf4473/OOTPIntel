@@ -198,7 +198,8 @@ class Player(BaseModel):
             else:
                 print "missing franchse: " + self.Team + "," + self.Level
         else:
-            print "bad data for " + self.Name
+            pass
+            #print "bad data for " + self.Name
 
     def calcStats(self, constants):
         #250 IP for starter, 80 for others.
