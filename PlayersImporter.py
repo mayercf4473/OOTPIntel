@@ -96,7 +96,7 @@ class PlayersImporter(HTMLParser):
         playerList = f.read()
         playerArray = playerList.split(",")
         for playerName in playerArray:
-            player = DBController.findPlayerByName(playerName)
+            player = Player.findPlayerByName(playerName)
             if player:
                 player.drafted = 1
                 player.save()

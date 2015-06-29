@@ -50,6 +50,9 @@ class League():
 
     @staticmethod
     def findFranchise(team, level, fullTeam):
+        if level == "INT":
+            return team
+
         count = 0;
         retval = ""
         useFullTeam = False

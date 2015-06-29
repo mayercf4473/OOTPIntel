@@ -120,7 +120,7 @@ class Player(BaseModel):
         self.Position = fieldArray[headerDict['POS']]
         theName = unicode(fieldArray[headerDict['Name']], errors="ignore")
         self.Name = theName.replace('0','-')
-        self.Team = unicode(fieldArray[headerDict['TMa']], errors="ignore").encode("ascii", "ignore")
+        self.Team = unicode(fieldArray[headerDict['TM']], errors="ignore").encode("ascii", "ignore")
         self.Level = fieldArray[headerDict['Lev']]
         self.DOB = fieldArray[headerDict['DOB']]
         self.Age=fieldArray[headerDict['Age']]
@@ -197,9 +197,12 @@ class Player(BaseModel):
                 self.franchise = franchise
             else:
                 print "missing franchse: " + self.Team + "," + self.Level
+                self.franchise = self.Team
         else:
             pass
             #print "bad data for " + self.Name
+
+        self.franchise = "AUS"
 
     def calcStats(self, constants):
         #250 IP for starter, 80 for others.
@@ -331,6 +334,15 @@ class Player(BaseModel):
         self.LFP = ( ( (nOFRNG - 62.5)/25*31.5) + ( (nOFARM - 62.5)/25*4.25 ) + ( (nOFERR - 62.5)/25*6.25 ) + 80 )
         self.CFP = ( ( (nOFRNG - 62.5)/25*43) + ( (nOFARM - 62.5)/25*1.75 ) + ( (nOFERR - 62.5)/25*3.5 ) + 39 )
         self.RFP = ( ( (nOFRNG - 62.5)/25*33.75) + ( (nOFARM - 62.5)/25*6.25 ) + ( (nOFERR - 62.5)/25*6.25 ) + 71 )
+
+        self.CP = (((self.CP - 1)/consts.fieldCo) * consts.deltaMinMax) + consts.minRating
+        self.CFP = (((self.CFP - 1)/consts.fieldCo) * consts.deltaMinMax) + consts.minRating
+        self.LFP = (((self.LFP - 1)/consts.fieldCo) * consts.deltaMinMax) + consts.minRating
+        self.RFP = (((self.RFP - 1)/consts.fieldCo) * consts.deltaMinMax) + consts.minRating
+        self.SSP = (((self.SSP - 1)/consts.fieldCo) * consts.deltaMinMax) + consts.minRating
+        self.B1P = (((self.B1P - 1)/consts.fieldCo) * consts.deltaMinMax) + consts.minRating
+        self.B2P = (((self.B2P - 1)/consts.fieldCo) * consts.deltaMinMax) + consts.minRating
+        self.B3P = (((self.B3P - 1)/consts.fieldCo) * consts.deltaMinMax) + consts.minRating
 
         ssUZR = (((float(self.SSP) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.365 - 22.4
         b1UZR = (((float(self.B1P) - consts.minRating)/consts.deltaMinMax) * consts.fieldCo + 1)*.167 - 9.8

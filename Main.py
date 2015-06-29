@@ -26,6 +26,8 @@ def main():
     importer = PlayersImporter(LeagueConsts(args.config))
     #importer = StatsImporter(2014)
     importer.doImport(args.playerFile)
+    #importer.fixStats()
+    #importer.draftPlayers("input/drafted.txt")
 
 if __name__ == "__main__":
    main()
