@@ -20,7 +20,7 @@ def rawFIP(ip, strikeOuts, homeRuns, walks):
 
 #very rough wSB
 def rawWSB(sb, cs):
-    return sb * .2 + cs * .32
+    return sb * .2 - cs * .32
 
 def rawPWAR(innings, fip):
     if innings <= 0:
