@@ -202,7 +202,7 @@ class Player(BaseModel):
             pass
             #print "bad data for " + self.Name
 
-        self.franchise = "AUS"
+        #self.franchise ="PIT"
 
     def calcStats(self, constants):
         #250 IP for starter, 80 for others.
