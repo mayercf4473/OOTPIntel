@@ -13,7 +13,7 @@ from DBController import DBController
 from Player import Player
 
 def main():
-    print "Welcome to stats importer!"
+    print ("Welcome to stats importer!")
     parser = argparse.ArgumentParser()
     parser.add_argument("--schema", help="Schema name", default="ootp_players")
     parser.add_argument("--config", help="Json config file")

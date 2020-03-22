@@ -1,6 +1,6 @@
 __author__ = 'cmayer'
 
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 from LeagueConsts import LeagueConsts
 from Player import Player
 from DBController import DBController
@@ -62,7 +62,7 @@ class PlayersImporter(HTMLParser):
                     self.playerData += self.currentData + ","
             elif tag == "th" and self.subSection == 3:
                 theHeader = self.currentData
-                while self.headers.has_key(theHeader):
+                while theHeader in self.headers:
                     theHeader += 'a'
                 self.headers[theHeader] = self.index
                 #print (theHeader + ":%d" % self.index)
@@ -71,8 +71,8 @@ class PlayersImporter(HTMLParser):
                 #encounted an end of player row
                 fieldArray = self.playerData.split(',')
                 #query for player based on name (field 1) and date (field 4)
-                #print 'processing ' + unicode(fieldArray[1], errors="ignore")
-                newPlayer = Player.findPlayer(unicode(fieldArray[1], errors="ignore"), fieldArray[4])
+                print('processing ' + fieldArray[1])
+                newPlayer = Player.findPlayer(fieldArray[1], fieldArray[4])
                 if newPlayer is None:
                     newPlayer = Player()
                 newPlayer.initFromString(self.playerData, self.headers, self.leagueConsts)

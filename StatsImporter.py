@@ -1,6 +1,6 @@
 __author__ = 'cmayer'
 
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 from LeagueConsts import LeagueConsts
 from Stats import Stats
 from DBController import DBController

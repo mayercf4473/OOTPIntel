@@ -118,9 +118,9 @@ class Player(BaseModel):
         dataString = dataString.replace('-','0')
         fieldArray = dataString.split(',')
         self.Position = fieldArray[headerDict['POS']]
-        theName = unicode(fieldArray[headerDict['Name']], errors="ignore")
+        theName = fieldArray[headerDict['Name']]
         self.Name = theName.replace('0','-')
-        self.Team = unicode(fieldArray[headerDict['TM']], errors="ignore").encode("ascii", "ignore")
+        self.Team = fieldArray[headerDict['TM']]
         self.Level = fieldArray[headerDict['Lev']]
         self.DOB = fieldArray[headerDict['DOB']]
         self.Age=fieldArray[headerDict['Age']]
@@ -135,7 +135,7 @@ class Player(BaseModel):
         self.GAP = int(fieldArray[headerDict['GAP']])
         self.POW = int(fieldArray[headerDict['POW']])
         self.EYE = int(fieldArray[headerDict['EYE']])
-        self.Ks = int(fieldArray[headerDict['Ks']])
+        self.Ks = int(fieldArray[headerDict['K\'s']])
         self.CONvL = fieldArray[headerDict['CON vL']]
         self.GAPvL = fieldArray[headerDict['GAP vL']]
         self.POWvL = fieldArray[headerDict['POW vL']]
@@ -189,18 +189,19 @@ class Player(BaseModel):
 
         self.calcStats(constants)
 
-        fullTeam = unicode(fieldArray[headerDict['TM']], errors="ignore").encode("ascii", "ignore")
+        fullTeam = fieldArray[headerDict['TM']]
 
         if (self.Team and self.Team != '0' and self.Level):
             franchise = League.findFranchise(self.Team, self.Level, fullTeam)
             if franchise:
                 self.franchise = franchise
             else:
-                print "missing franchse: " + self.Team + "," + self.Level
+                msg = "missing franchse: " + self.Team + "," + self.Level
+                print(msg)
                 self.franchise = self.Team
         else:
             pass
-            #print "bad data for " + self.Name
+            #print("bad data for " + self.Name)
 
         #self.franchise ="PIT"
 

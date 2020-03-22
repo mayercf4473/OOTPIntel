@@ -35,7 +35,7 @@ class Stats(BaseModel):
 
         player = Player.findPlayer(self.Name, self.DOB)
         if not player:
-            print "No Player found for " + self.Name + self.DOB
+            print ("No Player found for " + self.Name + self.DOB)
 
         self.PlayerId = player
 

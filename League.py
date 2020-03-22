@@ -53,7 +53,6 @@ class League():
         if level == "INT":
             return team
 
-        count = 0;
         retval = ""
         useFullTeam = False
         found = False
@@ -67,7 +66,8 @@ class League():
 
         if (not found):
             if not level == "INT":
-                print "No Franchise for " + team + level + fullTeam
+                msg = "No Franchise for " + team + level + fullTeam
+                print (msg)
 
         return retval
 
